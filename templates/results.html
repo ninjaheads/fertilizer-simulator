@@ -1,0 +1,26 @@
+<table border="1">
+    <thead>
+        <tr>
+            <th>肥料名</th>
+            <th>ポンプ</th>
+            <th>溶液量 (L)</th>
+            <th>質量 (kg)</th>
+            {% for elem in elements %}
+            <th>{{ elem }} </th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.brand }}</td>
+            <td>{{ row.pump }}</td>
+            <td>{{ row.volume }}</td>
+            <td>{{ row.weight }}</td>
+            {% for elem in elements %}
+            <td>{{ row[elem] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

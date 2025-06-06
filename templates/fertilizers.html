@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>肥料一覧</title>
+</head>
+<body>
+    <h1>登録肥料リスト</h1>
+    <ul>
+        {% for fertilizer in fertilizers %}
+            <li>{{ fertilizer.brand }} (ID: {{ fertilizer.id }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

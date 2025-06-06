@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>イオン別当量と養液EC</title>
+</head>  
+<body>
+<!-- イオン当量（me）と微量要素量（ppm） -->    
+    <h2>各ポンプのイオン当量（me）と微量要素量（ppm）</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                <th>ポンプ</th>
+                {% for ion in ion_keys %}
+                    <th>{{ ion }}</th>
+                {% endfor %}
+                {% for elem in trace_keys %}
+                    <th>{{ elem }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in unified_rows %}
+                <tr>
+                    {# タンク名の表示を調整 #}
+                    {% if row.tank == "Water" %}
+                    <td>希釈原水</td>
+                    {% elif row.tank == "Total" %}
+                    <td>合計</td>
+                    {% else %}
+                    <td>{{ row.tank }}ポンプ</td>
+                    {% endif %}
+                    {% for ion in ion_keys %}
+                    <td>{{ '%.3f' % row[ion] }}</td>
+                    {% endfor %}
+                    {% for elem in trace_keys %}
+                    <td>{{ '%.3f' % row[elem] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+<!-- 養液EC（mS/cm） -->
+    <h2>養液/Lのイオン当量（me）と微量要素量（ppm）及び養液EC（mS/cm）</h2>
+        <table border="1">
+        <thead>
+            <tr>
+            <th>成分</th>
+            {% for key in ion_keys + trace_keys %}
+                <th>{{ key }}</th>
+            {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+            <td>me/L・ppm</td>
+            {% for key in ion_keys + trace_keys %}
+                <td>{{ one_liter_me[key] }}</td>
+            {% endfor %}
+            </tr>
+            <tr>
+            <td>EC（mS/cm）</td>
+            {% for key in ion_keys + trace_keys %}
+                {% if key in ion_keys %}
+                <td>{{ ec_by_ion[key] }}</td>
+                {% else %}
+                <td>-</td>
+                {% endif %}
+            {% endfor %}
+            </tr>
+            <tr>
+            <td>EC合計</td>
+            <td colspan="{{ (ion_keys|length + trace_keys|length) }}">{{ ec_total }}</td>
+            </tr>
+        </tbody>
+        </table>
+    </body>
+</html>

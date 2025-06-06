@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>養液肥料の設計</title>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+</head>
+<body>
+    {% if fertilizers and not rows %}  <!-- 計算結果が無いときだけフォーム表示 -->
+    <h1>養液設計</h1>
+    <!-- ▼▼ Aタンク・Bタンクの溶液量入力フォーム ▼▼ -->
+    <form method="post" hx-post="/simulate" hx-target="#results">
+        <label>Aタンク溶液量（L）: <input type="number" name="volume_A" step="0.1" min="0" required></label><br>
+        <label>Bタンク溶液量（L）: <input type="number" name="volume_B" step="0.1" min="0" required></label><br><br>
+
+        <h2>肥料設定</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>選択</th>
+                    <th>肥料名</th>
+                    <th>タンク</th>
+                    <th>質量 (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fertilizer in fertilizers %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="fertilizers" value="{{ fertilizer.id }}">
+                    </td>
+                    <td>{{ fertilizer.brand }}</td>
+                    <td>
+                        <select name="pump_{{ fertilizer.id }}" onchange="toggleWeightInput(this, '{{ fertilizer.id }}')">
+                            <option value="">--</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="原水">原水</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" name="weight_{{ fertilizer.id }}" step="0.01" min="0" id="weight_{{ fertilizer.id }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit">計算</button>
+    </form>
+    {% endif %}
+
+    <div id="results">
+        <!-- ▼▼ 肥料別成分表示 ▼▼ -->
+        {% if rows %}
+        <h2>肥料別成分（ppm）</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>肥料名</th>
+                    <th>タンク</th>
+                    <th>質量 (kg)</th>
+                    {% for elem in elements %}
+                    <th>{{ elem }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.brand }}</td>
+                <td>
+                {% if row.pump == "Water" %}
+                    原水
+                {% else %}
+                    {{ row.pump }}
+                {% endif %}
+                </td>
+                <td>{{ row.weight }}</td>
+                {% for elem in elements %}
+                <td>{{ '%.1f' % row[elem] if row[elem] != '' else '' }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if tank_totals %}
+        <h2>タンク別成分（ppm）</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>タンク</th>
+                    {% for elem in elements %}
+                        <th>{{ elem }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for pump in ['A', 'B', 'Water'] %}
+                <tr>
+                    <td>{{ '原水' if pump == 'Water' else pump + 'ポンプ' }}</td>
+                    {% for elem in elements %}
+                        <td>{{ '%.1f' % tank_totals[pump][elem] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if tank_totals %}
+        <h2>肥料別イオン当量（me/L）</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>肥料名</th>
+                    {% for ion in ion_elements %}
+                        <th>{{ ion }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in ion_rows %}
+                <tr>
+                    <td>{{ row.brand }}</td>
+                    {% for ion in ion_elements %}
+                        <td>
+                            {% if row[ion] is defined %}
+                                {{ row[ion] }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if ion_totals %}
+        <h2>タンク別イオン当量（me/L）</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>タンク</th>
+                    {% for ion in ion_elements %}
+                        <th>{{ ion }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for pump in ['A', 'B', 'Water'] %}
+                <tr>
+                    <td>{{ '原水' if pump == 'Water' else pump + 'ポンプ' }}</td>
+                    {% for ion in ion_elements %}
+                        <td>{{ '%.2f' % ion_totals[pump][ion] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if ion_totals %}
+        <h2>タンク別イオンEC（mS/cm）</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>タンク</th>
+                    {% for ion in ec_results["A"]["ions"].keys() %}
+                        <th>{{ ion }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for tank in ["A", "B", "Water"] %}
+                <tr>
+                    <td>{{ "原水" if tank == "Water" else tank + "ポンプ" }}</td>
+                    {% for ion in ec_results["A"]["ions"].keys() %}
+                        <td>{{ '%.2f' % ec_results[tank]["ions"][ion] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+<script>
+    function toggleWeightInput(selectElement, id) {
+        const input = document.getElementById("weight_" + id);
+        if (selectElement.value === "原水") {
+            input.readOnly = true;
+            input.value = 1;  // 任意の固定値（使っても使わなくてもOK）
+        } else {
+            input.readOnly = false;
+        }
+    }
+</script>
+</body>
+</html>
+
+{% if ion_totals %}
+<h2>養液希釈設定</h2>
+<form method="post" hx-post="/simulate_ec" hx-target="#ec-results">
+    <label>Aポンプ使用量（L）:
+        <input type="number" name="a_volume" step="0.1" min="0" required>
+    </label><br>
+    <label>Bポンプ使用量（L）:
+        <input type="number" name="b_volume" step="0.1" min="0" required>
+    </label><br>
+    <label>希釈原水量（L）:
+        <input type="number" name="dilution_volume" step="0.1" min="0" required>
+    </label><br>
+    <label>養液の実測もしくは予測pH:
+        <input type="number" name="dilution_ph" step="0.1" min="0" required>
+    </label><br><br>
+
+    <button type="submit">計算</button>
+</form>
+<div id="ec-results">
+    <!-- HTMXによってEC計算結果がここに差し込まれます -->
+</div>
+{% endif %}
+    
