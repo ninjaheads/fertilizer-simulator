@@ -1,9 +1,6 @@
 from dotenv import load_dotenv
 import os
 load_dotenv()  # .envから環境変数をロード
-import debugpy
-debugpy.listen(("0.0.0.0", 5678))
-print("✅ debugpy: VSCodeからのアタッチを待っています")
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
