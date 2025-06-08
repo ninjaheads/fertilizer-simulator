@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv()  # .envから環境変数をロード
 import debugpy
 debugpy.listen(("0.0.0.0", 5678))
 print("✅ debugpy: VSCodeからのアタッチを待っています")
@@ -9,14 +12,11 @@ from supabase_client import supabase
 from starlette.middleware.sessions import SessionMiddleware
 from collections import defaultdict
 from starlette.middleware.sessions import SessionMiddleware
-from dotenv import load_dotenv
-import os
 import json
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-load_dotenv()  # .envから環境変数をロード
 secret_key = os.environ.get("SECRET_KEY")
 if not secret_key:
     raise RuntimeError("SECRET_KEY is not set in .env")
