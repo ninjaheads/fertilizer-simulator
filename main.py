@@ -26,6 +26,10 @@ app.add_middleware(SessionMiddleware, secret_key=secret_key)
 async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.get("/simulate", response_class=HTMLResponse)
 async def show_simulate_page(request: Request):
     fertilizers = supabase.table("fertilizers").select("id, brand").execute().data
